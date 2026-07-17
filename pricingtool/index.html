@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>InFrame × Apex — Price Calculator</title>
+<style>
+  :root{
+    --ink:#111318; --paper:#ffffff; --mist:#f5f6f8; --line:#e4e6ea; --muted:#6b7280;
+    --accent:#158b7d; --accent-lt:#e4f2ef;
+    --out:#c08a2e; --use:#158b7d; --home:#9aa4b2; --amber-lt:#f7efe0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    background:var(--mist);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:24px}
+  header{background:var(--ink);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:20px;
+    display:flex;flex-direction:column;gap:6px}
+  .mark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .mark span{font-weight:300;opacity:.75}
+  .sub{font-size:12px;color:#c7cad0;letter-spacing:.02em;margin:0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--ink);
+    margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 5px}
+  input,select{width:100%;height:42px;padding:0 11px;font-size:16px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none}
+  input:focus,select:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(17,19,24,.10)}
+  .field{margin-bottom:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .radio{display:flex;gap:16px;align-items:center;height:38px}
+  .radio label{display:inline-flex;align-items:center;gap:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0;cursor:pointer;font-weight:400}
+  .radio input{width:auto;height:auto;margin:0;accent-color:var(--ink);-webkit-appearance:auto;appearance:auto}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .tile{border-radius:10px;padding:12px 14px;color:#fff}
+  .tile.d2d{background:var(--ink)}
+  .tile.use{background:var(--accent)}
+  .tile .k{font-size:10px;opacity:.8;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+  .tile .v{font-size:18px;font-weight:700;margin-top:3px}
+  .summary{background:var(--mist);border-left:3px solid var(--ink);padding:12px 16px;margin-bottom:16px}
+  .summary .nm{font-size:15px;font-weight:700;letter-spacing:.02em;margin-bottom:4px}
+  .summary .sp{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.03em;line-height:1.65}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:11px 0 11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  td:first-child{border-left:3px solid transparent}
+  tr.r-out td:first-child{border-left-color:var(--out)}
+  tr.r-use td:first-child{border-left-color:var(--use)}
+  tr.r-home td:first-child{border-left-color:var(--home)}
+  .li-name{font-weight:600}.li-meta{font-size:12px;color:var(--muted)}
+  .amt{text-align:right;padding-right:2px;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  .tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:5px;background:var(--accent-lt);color:var(--accent);margin-left:6px}
+  .totalband{display:flex;justify-content:space-between;align-items:center;margin-top:16px;background:var(--ink);color:#fff;border-radius:10px;padding:14px 18px}
+  .totalband .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#c7cad0}
+  .totalband .v{font-size:25px;font-weight:700}
+  .bar{display:flex;height:24px;border-radius:6px;overflow:hidden;margin:18px 0 6px}
+  .seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:0}
+  .key{display:flex;gap:16px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .key span{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .callout{display:flex;justify-content:space-between;align-items:center;margin-top:16px;background:var(--amber-lt);border-left:3px solid var(--out);padding:11px 16px}
+  .callout .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7a5410}
+  .callout .v{font-size:15px;font-weight:700;color:#8a6012}
+  .warn{font-size:12px;color:#a32d2d;margin-top:6px;display:none}
+  .foot{font-size:10px;color:var(--muted);margin-top:18px;text-align:center;text-transform:uppercase;letter-spacing:.08em}
+  .actions{display:flex;gap:10px;margin-top:18px}
+  .actions button{flex:1;height:44px;border-radius:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--ink)}
+  .actions .print{background:#fff;color:var(--ink)}
+  .actions .print:hover{background:var(--mist)}
+  .actions .email{background:var(--ink);color:#fff}
+  .actions .email:hover{background:#000}
+  .gate{position:fixed;inset:0;background:var(--mist);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  .gatecard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px 28px;max-width:360px;width:100%;text-align:center}
+  .gatemark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px}
+  .gatemark span{font-weight:300;color:var(--muted)}
+  .gatesub{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:20px}
+  .gatecard input{text-align:center;letter-spacing:.1em;margin-bottom:10px;height:44px}
+  .gatecard button{width:100%;height:44px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
+  .gateerr{font-size:12px;color:#a32d2d;margin-top:10px;height:16px;visibility:hidden}
+  @media(max-width:600px){
+    .wrap{padding:14px}
+    header{padding:18px 18px;border-radius:12px;margin-bottom:16px}
+    .mark{font-size:17px;letter-spacing:.12em}
+    .card{padding:16px 16px}
+    .grid{gap:14px}
+    .card h2{margin-bottom:14px}
+    .totalband .v{font-size:22px}
+    .tile .v{font-size:17px}
+    .actions button{height:48px}
+    .gatecard{padding:26px 20px}
+  }
+  @media(max-width:380px){
+    .row2{grid-template-columns:1fr}
+    .tiles{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff}
+    .gate{display:none!important}
+    header{background:none;color:#000;padding:0}.mark span{color:#555}
+    .sub,.foot,.no-print,.inputs{display:none}
+    .grid{display:block}.card{border:none;border-radius:0;padding:0}
+    .wrap{padding:0}
+  }
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <div class="gatemark">InFrame <span>× Apex</span></div>
+    <div class="gatesub">Price Calculator</div>
+    <input id="gatepw" type="password" placeholder="Password" autocomplete="off" />
+    <button id="gatebtn" type="button">Unlock</button>
+    <div class="gateerr" id="gateerr">Incorrect password</div>
+  </div>
+</div>
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div class="mark">InFrame <span>× Apex</span></div>
+    <p class="sub">Price Calculator</p>
+  </header>
+  <div class="grid">
+    <div class="card inputs">
+      <h2>Project</h2>
+      <div class="field"><label for="name">Name</label><input id="name" type="text" value="Test Show" /></div>
+      <div class="row2">
+        <div class="field"><label for="start">OUT</label><input id="start" type="date" value="2026-08-03" /></div>
+        <div class="field"><label for="end">IN</label><input id="end" type="date" value="2026-08-16" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="dep">Travel days — depart</label><input id="dep" type="number" min="0" step="1" value="1" /></div>
+        <div class="field"><label for="ret">Travel days — return</label><input id="ret" type="number" min="0" step="1" value="1" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="weekly">Weekly rate ($ / item)</label><input id="weekly" type="number" min="0" step="50" value="500" /></div>
+        <div class="field"><label for="qty">Quantity (items)</label><input id="qty" type="number" min="1" step="1" value="1" /></div>
+      </div>
+      <div class="field"><label>Travel days</label>
+        <div class="radio">
+          <label><input type="radio" name="mode" value="0" checked /> Logged</label>
+          <label><input type="radio" name="mode" value="rate" /> Charged (10%)</label>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile d2d"><div class="k">Door to Door</div><div class="v" id="d2d">14 days</div></div>
+        <div class="tile use"><div class="k">In use</div><div class="v" id="derived">12 days</div></div>
+      </div>
+      <p class="warn" id="warn"></p>
+    </div>
+    <div class="card profile">
+      <h2>Project profile</h2>
+      <div class="summary">
+        <div class="nm" id="sum-name">Test Show</div>
+        <div class="sp" id="sum-out">OUT: 03-AUG-2026</div>
+        <div class="sp" id="sum-in">IN: 16-AUG-2026</div>
+        <div class="sp" id="sum-d2d">14 days (D2D)</div>
+      </div>
+      <table id="profile"></table>
+      <div class="totalband"><span class="k">Project total</span><span class="v" id="total">$797</span></div>
+      <div class="bar" id="bar"></div>
+      <div class="key">
+        <span><i class="dot" style="background:var(--out)"></i>Depart</span>
+        <span><i class="dot" style="background:var(--use)"></i>In use</span>
+        <span><i class="dot" style="background:var(--home)"></i>Return</span>
+      </div>
+      <div class="callout"><span class="k">Travel days logged</span><span class="v" id="logged">2 days</span></div>
+      <div class="actions no-print">
+        <button class="print" id="printBtn" type="button">Print / Save PDF</button>
+        <button class="email" id="emailBtn" type="button">Email</button>
+      </div>
+    </div>
+  </div>
+  <p class="foot">Week-minimum ramp · 1–7 days = 1 week · extra days ramp toward the next full week</p>
+</div>
+<script>
+  var W=[1,1.5,2,2.5,2.5,2.5];
+  function marg(w){
+    if(w<=1)return 1.00;
+    if(w===2)return 0.80;
+    if(w===3)return 0.75;
+    if(w<=12)return 0.70;
+    if(w<=26)return 0.70+(0.625-0.70)*(w-12)/14;
+    if(w<=52)return 0.625+(0.5-0.625)*(w-26)/26;
+    return 0.5;
+  }
+  function cumWeeks(n){var s=0;for(var i=1;i<=n;i++)s+=marg(i);return s;}
+  var COL={out:"#c08a2e",use:"#158b7d",home:"#9aa4b2"};
+  var MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  var last=null;
+  function money(n){return "$"+Math.round(n).toLocaleString("en-US");}
+  function fmtD(d){return ("0"+d.getDate()).slice(-2)+"-"+MON[d.getMonth()]+"-"+d.getFullYear();}
+  function priceUse(d,wk){
+    if(d<=0)return{price:0,reads:"none"};
+    if(d<=7)return{price:wk,reads:"1 week (minimum)"};
+    var w=Math.floor(d/7),r=d%7,ct=cumWeeks(w),na=marg(w+1);
+    var tot=W.reduce(function(a,b){return a+b;},0),c=0;for(var i=0;i<r;i++)c+=W[i];
+    var f=r===0?0:c/tot,m=ct+na*f;
+    return{price:wk*m,reads:w+" wk"+(w>1?"s":"")+(r>0?" + "+r+" day"+(r>1?"s":""):"")};
+  }
+  function parseD(s){var p=(s||"").split("-");return p.length===3?new Date(+p[0],+p[1]-1,+p[2]):null;}
+  function iv(id){return Math.max(0,Math.round(parseFloat(document.getElementById(id).value)||0));}
+  function modeVal(){var el=document.querySelector("input[name=mode]:checked");return el?el.value:"0";}
+  var PCT=0.10;
+  function render(){
+    var s=parseD(document.getElementById("start").value),e=parseD(document.getElementById("end").value),warn=document.getElementById("warn");
+    var mode=modeVal(),wk=Math.max(0,parseFloat(document.getElementById("weekly").value)||0);
+    var pct=PCT,road=mode==="rate"?pct*wk:0;
+    document.getElementById("sum-name").textContent=document.getElementById("name").value||"Untitled show";
+    document.getElementById("sum-out").textContent="OUT: "+(s?fmtD(s):"—");
+    document.getElementById("sum-in").textContent="IN: "+(e?fmtD(e):"—");
+    if(!s||!e||e<s){warn.style.display="block";warn.textContent="IN date must be on or after OUT date.";
+      document.getElementById("profile").innerHTML="";document.getElementById("bar").innerHTML="";
+      document.getElementById("total").textContent="—";last=null;
+      document.getElementById("d2d").textContent="—";document.getElementById("derived").textContent="—";
+      document.getElementById("sum-d2d").textContent="—";return;}
+    var span=Math.round((e-s)/86400000)+1;
+    var dep=iv("dep"),ret=iv("ret"),qty=Math.max(1,iv("qty"));
+    var use=span-dep-ret;
+    document.getElementById("d2d").textContent=span+" day"+(span===1?"":"s");
+    document.getElementById("sum-d2d").textContent=span+" days (D2D)";
+    if(use<0){warn.style.display="block";warn.textContent="Travel days ("+(dep+ret)+") exceed the "+span+"-day Door to Door span. In use set to 0.";use=0;}
+    else warn.style.display="none";
+    document.getElementById("derived").textContent=use+" day"+(use===1?"":"s");
+    var up=priceUse(use,wk),unit=up.price,useTotal=unit*qty,tOut=dep*road,tHome=ret*road,total=tOut+useTotal+tHome,logged=dep+ret;
+    var qmeta=use+" day"+(use===1?"":"s")+" · "+up.reads+" · ×"+qty+(qty>1?" ("+money(unit)+"/item)":"");
+    var pctlab=Math.round(pct*100)+"% · "+money(road)+"/day";
+    last={name:document.getElementById("name").value||"Untitled show",od:fmtD(s),id:fmtD(e),span:span,
+      dep:dep,ret:ret,qmeta:qmeta,useTotal:useTotal,tOut:tOut,tHome:tHome,total:total,mode:mode,logged:logged};
+    function tc(n){if(n<=0)return"<td class='amt'>—</td>";
+      if(mode==="rate")return"<td class='amt'>"+money(n*road)+"</td>";
+      return"<td class='amt' style='color:#8a94a3'>$0.00<span class='tag'>logged</span></td>";}
+    function tmeta(n){return n+" day"+(n===1?"":"s")+(mode==="rate"?" · "+pctlab:"");}
+    document.getElementById("profile").innerHTML=
+      "<tr class='r-out'><td><span class='li-name'>Travel out</span><div class='li-meta'>"+tmeta(dep)+"</div></td>"+tc(dep)+"</tr>"+
+      "<tr class='r-use'><td><span class='li-name'>In use</span><div class='li-meta'>"+qmeta+"</div></td><td class='amt'>"+money(useTotal)+"</td></tr>"+
+      "<tr class='r-home'><td><span class='li-name'>Travel home</span><div class='li-meta'>"+tmeta(ret)+"</div></td>"+tc(ret)+"</tr>";
+    document.getElementById("total").textContent=money(total);
+    function seg(n,c,l){if(n<=0)return"";var p=n/(span||1)*100;return"<div class='seg' style='width:"+p+"%;background:"+c+"' title='"+l+": "+n+"d'>"+(p>12?n+"d":"")+"</div>";}
+    document.getElementById("bar").innerHTML=seg(dep,COL.out,"Depart")+seg(use,COL.use,"In use")+seg(ret,COL.home,"Return");
+    document.getElementById("logged").textContent=logged+" day"+(logged===1?"":"s");
+  }
+  function travelLine(n,amt){if(n<=0)return "0 days";
+    return n+" day"+(n===1?"":"s")+" — "+(last.mode==="rate"?money(amt):"$0.00 (logged)");}
+  function buildText(){
+    if(!last)return "";
+    return [last.name,"OUT: "+last.od,"IN: "+last.id,last.span+" days (D2D)","",
+      "Travel out:   "+travelLine(last.dep,last.tOut),
+      "In use:       "+last.qmeta+" — "+money(last.useTotal),
+      "Travel home:  "+travelLine(last.ret,last.tHome),
+      "-----------------------------","PROJECT TOTAL: "+money(last.total),"",
+      "Travel days logged: "+last.logged+" day"+(last.logged===1?"":"s")].join("\n");
+  }
+  ["name","start","end","dep","ret","weekly","qty"].forEach(function(id){
+    var el=document.getElementById(id);el.addEventListener("input",render);el.addEventListener("change",render);});
+  Array.prototype.forEach.call(document.querySelectorAll("input[name=mode]"),function(el){el.addEventListener("change",render);});
+  document.getElementById("printBtn").addEventListener("click",function(){window.print();});
+  document.getElementById("emailBtn").addEventListener("click",function(){
+    if(!last)return;var subj="Project profile — "+last.name+" ("+last.od+" → "+last.id+")";
+    window.location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(buildText());});
+  function unlock(){
+    var pw=document.getElementById("gatepw").value;
+    if(pw==="chachacha"){document.getElementById("gate").style.display="none";
+      document.getElementById("app").style.display="";render();}
+    else{var er=document.getElementById("gateerr");er.style.visibility="visible";
+      document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}
+  }
+  document.getElementById("gatebtn").addEventListener("click",unlock);
+  document.getElementById("gatepw").addEventListener("keydown",function(ev){if(ev.key==="Enter")unlock();});
+  document.getElementById("gatepw").focus();
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
