@@ -14,16 +14,16 @@
   body{margin:0;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
     background:var(--mist);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
   .wrap{max-width:960px;margin:0 auto;padding:24px}
-  header{background:var(--ink);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:20px;
-    display:flex;flex-direction:column;gap:6px}
+  header{background:var(--ink);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:20px;display:flex;flex-direction:column;gap:6px}
   .mark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
   .mark span{font-weight:300;opacity:.75}
   .sub{font-size:12px;color:#c7cad0;letter-spacing:.02em;margin:0}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:780px){.grid{grid-template-columns:1fr}}
   .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
-  .card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--ink);
-    margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .card.inputs{border-top:4px solid var(--ink)}
+  .card.profile{border-top:4px solid var(--accent)}
+  .card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--ink);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
   label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 5px}
   input,select{width:100%;height:42px;padding:0 11px;font-size:16px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none}
   input:focus,select:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(17,19,24,.10)}
@@ -67,8 +67,8 @@
   .actions button{flex:1;height:44px;border-radius:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--ink)}
   .actions .print{background:#fff;color:var(--ink)}
   .actions .print:hover{background:var(--mist)}
-  .actions .email{background:var(--ink);color:#fff}
-  .actions .email:hover{background:#000}
+  .actions .clip{background:var(--ink);color:#fff}
+  .actions .clip:hover{background:#000}
   .gate{position:fixed;inset:0;background:var(--mist);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
   .gatecard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px 28px;max-width:360px;width:100%;text-align:center}
   .gatemark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px}
@@ -101,6 +101,7 @@
     header{background:none;color:#000;padding:0;margin-top:4mm}.mark span{color:#555}
     .sub,.foot,.no-print,.inputs{display:none}
     .grid{display:block}.card{border:none;border-radius:0;padding:0}
+    .card.profile{border-top:none}
     .wrap{padding:0}
   }
 </style>
@@ -113,7 +114,7 @@
     <input id="gatepw" type="password" placeholder="Password" autocomplete="off" />
     <button id="gatebtn" type="button">Unlock</button>
     <div class="gateerr" id="gateerr">Incorrect password</div>
-    <div class="gatever" id="gatever">v1.0.0</div>
+    <div class="gatever" id="gatever">v1.0.1</div>
   </div>
 </div>
 <div class="wrap" id="app" style="display:none">
@@ -168,7 +169,7 @@
       <div class="callout"><span class="k">Travel days logged</span><span class="v" id="logged">2 days</span></div>
       <div class="actions no-print">
         <button class="print" id="printBtn" type="button">Print / Save PDF</button>
-        <button class="email" id="clipBtn" type="button">Clipboard</button>
+        <button class="clip" id="clipBtn" type="button">Clipboard</button>
       </div>
     </div>
   </div>
@@ -189,7 +190,7 @@
   function cumWeeks(n){var s=0;for(var i=1;i<=n;i++)s+=marg(i);return s;}
   var COL={out:"#c08a2e",use:"#158b7d",home:"#9aa4b2"};
   var MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  var last=null;
+  var PCT=0.10, last=null;
   function money(n){return "$"+Math.round(n).toLocaleString("en-US");}
   function fmtD(d){return ("0"+d.getDate()).slice(-2)+"-"+MON[d.getMonth()]+"-"+d.getFullYear();}
   function priceUse(d,wk){
@@ -203,7 +204,6 @@
   function parseD(s){var p=(s||"").split("-");return p.length===3?new Date(+p[0],+p[1]-1,+p[2]):null;}
   function iv(id){return Math.max(0,Math.round(parseFloat(document.getElementById(id).value)||0));}
   function modeVal(){var el=document.querySelector("input[name=mode]:checked");return el?el.value:"0";}
-  var PCT=0.10;
   function render(){
     var s=parseD(document.getElementById("start").value),e=parseD(document.getElementById("end").value),warn=document.getElementById("warn");
     var mode=modeVal(),wk=Math.max(0,parseFloat(document.getElementById("weekly").value)||0);
@@ -226,7 +226,7 @@
     document.getElementById("derived").textContent=use+" day"+(use===1?"":"s");
     var up=priceUse(use,wk),unit=up.price,useTotal=unit*qty,tOut=dep*road,tHome=ret*road,total=tOut+useTotal+tHome,logged=dep+ret;
     var qmeta=use+" day"+(use===1?"":"s")+" · "+up.reads+" · ×"+qty+(qty>1?" ("+money(unit)+"/item)":"");
-    var pctlab=Math.round(pct*100)+"% · "+money(road)+"/day";
+    var pctlab="10% · "+money(road)+"/day";
     last={name:document.getElementById("name").value||"Untitled show",od:fmtD(s),id:fmtD(e),span:span,
       dep:dep,ret:ret,qmeta:qmeta,useTotal:useTotal,tOut:tOut,tHome:tHome,total:total,mode:mode,logged:logged};
     function tc(n){if(n<=0)return"<td class='amt'>—</td>";
@@ -241,17 +241,6 @@
     function seg(n,c,l){if(n<=0)return"";var p=n/(span||1)*100;return"<div class='seg' style='width:"+p+"%;background:"+c+"' title='"+l+": "+n+"d'>"+(p>12?n+"d":"")+"</div>";}
     document.getElementById("bar").innerHTML=seg(dep,COL.out,"Depart")+seg(use,COL.use,"In use")+seg(ret,COL.home,"Return");
     document.getElementById("logged").textContent=logged+" day"+(logged===1?"":"s");
-  }
-  function travelLine(n,amt){if(n<=0)return "0 days";
-    return n+" day"+(n===1?"":"s")+" — "+(last.mode==="rate"?money(amt):"$0.00 (logged)");}
-  function buildText(){
-    if(!last)return "";
-    return [last.name,"OUT: "+last.od,"IN: "+last.id,last.span+" days (D2D)","",
-      "Travel out:   "+travelLine(last.dep,last.tOut),
-      "In use:       "+last.qmeta+" — "+money(last.useTotal),
-      "Travel home:  "+travelLine(last.ret,last.tHome),
-      "-----------------------------","PROJECT TOTAL: "+money(last.total),"",
-      "Travel days logged: "+last.logged+" day"+(last.logged===1?"":"s")].join("\n");
   }
   ["name","start","end","dep","ret","weekly","qty"].forEach(function(id){
     var el=document.getElementById(id);el.addEventListener("input",render);el.addEventListener("change",render);});
@@ -279,4 +268,15 @@
   });
   function unlock(){
     var pw=document.getElementById("gatepw").value;
-    if(pw==="chachacha"){document.getElementById("gate").style.d
+    if(pw==="chachacha"){document.getElementById("gate").style.display="none";
+      document.getElementById("app").style.display="";render();}
+    else{document.getElementById("gateerr").style.visibility="visible";
+      document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}
+  }
+  document.getElementById("gatebtn").addEventListener("click",unlock);
+  document.getElementById("gatepw").addEventListener("keydown",function(ev){if(ev.key==="Enter")unlock();});
+  document.getElementById("gatepw").focus();
+</script>
+</body>
+</html>
+                      
