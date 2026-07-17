@@ -77,6 +77,7 @@
   .gatecard input{text-align:center;letter-spacing:.1em;margin-bottom:10px;height:44px}
   .gatecard button{width:100%;height:44px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
   .gateerr{font-size:12px;color:#a32d2d;margin-top:10px;height:16px;visibility:hidden}
+  .gatever{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px}
   @media(max-width:600px){
     .wrap{padding:14px}
     header{padding:18px 18px;border-radius:12px;margin-bottom:16px}
@@ -93,10 +94,11 @@
     .row2{grid-template-columns:1fr}
     .tiles{grid-template-columns:1fr}
   }
+  @page{margin:22mm 14mm 16mm 14mm}
   @media print{
     body{background:#fff}
     .gate{display:none!important}
-    header{background:none;color:#000;padding:0}.mark span{color:#555}
+    header{background:none;color:#000;padding:0;margin-top:4mm}.mark span{color:#555}
     .sub,.foot,.no-print,.inputs{display:none}
     .grid{display:block}.card{border:none;border-radius:0;padding:0}
     .wrap{padding:0}
@@ -111,6 +113,7 @@
     <input id="gatepw" type="password" placeholder="Password" autocomplete="off" />
     <button id="gatebtn" type="button">Unlock</button>
     <div class="gateerr" id="gateerr">Incorrect password</div>
+    <div class="gatever" id="gatever">v1.0.0</div>
   </div>
 </div>
 <div class="wrap" id="app" style="display:none">
@@ -165,12 +168,13 @@
       <div class="callout"><span class="k">Travel days logged</span><span class="v" id="logged">2 days</span></div>
       <div class="actions no-print">
         <button class="print" id="printBtn" type="button">Print / Save PDF</button>
-        <button class="email" id="emailBtn" type="button">Email</button>
+        <button class="email" id="clipBtn" type="button">Clipboard</button>
       </div>
     </div>
   </div>
   <p class="foot">Week-minimum ramp · 1–7 days = 1 week · extra days ramp toward the next full week</p>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   var W=[1,1.5,2,2.5,2.5,2.5];
   function marg(w){
@@ -253,20 +257,26 @@
     var el=document.getElementById(id);el.addEventListener("input",render);el.addEventListener("change",render);});
   Array.prototype.forEach.call(document.querySelectorAll("input[name=mode]"),function(el){el.addEventListener("change",render);});
   document.getElementById("printBtn").addEventListener("click",function(){window.print();});
-  document.getElementById("emailBtn").addEventListener("click",function(){
-    if(!last)return;var subj="Project profile — "+last.name+" ("+last.od+" → "+last.id+")";
-    window.location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(buildText());});
+  function flash(btn,txt,orig){btn.textContent=txt;setTimeout(function(){btn.textContent=orig;},1700);}
+  function dlBlob(blob,btn,orig){var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=((last&&last.name)?last.name.replace(/[^\w\-]+/g,"_"):"project")+".png";
+    document.body.appendChild(a);a.click();a.remove();flash(btn,"Saved image",orig);}
+  document.getElementById("clipBtn").addEventListener("click",function(){
+    var btn=this,orig="Clipboard";
+    if(typeof html2canvas!=="function"){flash(btn,"Not ready",orig);return;}
+    btn.textContent="Rendering…";
+    var node=document.querySelector(".card.profile");
+    html2canvas(node,{backgroundColor:"#ffffff",scale:2,
+      ignoreElements:function(el){return el.classList&&el.classList.contains("actions");}}).then(function(canvas){
+      canvas.toBlob(function(blob){
+        if(navigator.clipboard&&window.ClipboardItem){
+          navigator.clipboard.write([new ClipboardItem({"image/png":blob})])
+            .then(function(){flash(btn,"Copied ✓",orig);})
+            .catch(function(){dlBlob(blob,btn,orig);});
+        }else{dlBlob(blob,btn,orig);}
+      },"image/png");
+    }).catch(function(){flash(btn,"Error",orig);});
+  });
   function unlock(){
     var pw=document.getElementById("gatepw").value;
-    if(pw==="chachacha"){document.getElementById("gate").style.display="none";
-      document.getElementById("app").style.display="";render();}
-    else{var er=document.getElementById("gateerr");er.style.visibility="visible";
-      document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}
-  }
-  document.getElementById("gatebtn").addEventListener("click",unlock);
-  document.getElementById("gatepw").addEventListener("keydown",function(ev){if(ev.key==="Enter")unlock();});
-  document.getElementById("gatepw").focus();
-</script>
-</body>
-</html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+    if(pw==="chachacha"){document.getElementById("gate").style.d
