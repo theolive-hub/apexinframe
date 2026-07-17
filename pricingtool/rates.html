@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>InFrame × Apex — Rate Curve</title>
+<style>
+  :root{--ink:#111318;--paper:#fff;--mist:#f5f6f8;--line:#e4e6ea;--muted:#6b7280;--accent:#158b7d}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--mist);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:24px}
+  header{background:var(--ink);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .mark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .mark span{font-weight:300;opacity:.75}
+  .sub{font-size:11px;color:#c7cad0;letter-spacing:.1em;text-transform:uppercase;margin:3px 0 0}
+  .back{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-decoration:none;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;padding:9px 14px}
+  .back:hover{border-color:#fff}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:18px}
+  h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;margin:0 0 4px}
+  .cap{font-size:12px;color:var(--muted);margin:0 0 14px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  @media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--mist);border-radius:8px;padding:12px 14px}
+  .kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .kpi .v{font-size:22px;font-weight:700;margin-top:3px}
+  .kpi .s{font-size:11px;color:var(--muted);margin-top:1px}
+  .leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 10px;font-size:12px;color:var(--muted)}
+  .leg span{display:flex;align-items:center;gap:5px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .swl{width:16px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
+  .foot{font-size:10px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+  .gate{position:fixed;inset:0;background:var(--mist);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  .gatecard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px 28px;max-width:360px;width:100%;text-align:center}
+  .gatemark{font-size:20px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px}
+  .gatemark span{font-weight:300;color:var(--muted)}
+  .gatesub{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:20px}
+  .gatecard input{width:100%;height:44px;text-align:center;letter-spacing:.1em;margin-bottom:10px;border:1px solid var(--line);border-radius:7px;font-size:16px}
+  .gatecard button{width:100%;height:44px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
+  .gateerr{font-size:12px;color:#a32d2d;margin-top:10px;height:16px;visibility:hidden}
+  .gatever{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px}
+  @media(max-width:600px){.wrap{padding:14px}header{padding:18px}}
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <div class="gatemark">InFrame <span>× Apex</span></div>
+    <div class="gatesub">Rate Curve</div>
+    <input id="gatepw" type="password" placeholder="Password" autocomplete="off" />
+    <button id="gatebtn" type="button">Unlock</button>
+    <div class="gateerr" id="gateerr">Incorrect password</div>
+    <div class="gatever">v1.0.3</div>
+  </div>
+</div>
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div><div class="mark">InFrame <span>× Apex</span></div><p class="sub">Rate Curve</p></div>
+    <a class="back" href="./">&larr; Calculator</a>
+  </header>
+
+  <div class="card">
+    <h2>Week rate multiple structure</h2>
+    <div class="cap">Marginal multiple charged for each added week &mdash; the six tiers</div>
+    <div class="leg" id="legStruct"></div>
+    <div id="s1"></div>
+  </div>
+
+  <div class="card">
+    <h2>Per-week rate</h2>
+    <div class="cap">Each added week (marginal) and the blended average across the rental</div>
+    <div class="leg">
+      <span><i class="swl" style="border-color:#158b7d"></i>Marginal</span>
+      <span><i class="swl" style="border-color:#2a78d6;border-top-style:dashed"></i>Blended average</span>
+    </div>
+    <div id="s2"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cumulative cost</h2>
+    <div class="cap">Total multiple of the weekly rate over the rental length</div>
+    <div class="kpis" id="kpis"></div>
+    <div id="s3"></div>
+  </div>
+
+  <p class="foot">Week-minimum &middot; wk1 1.00 &middot; wk2 0.80 &middot; wk3 0.75 &middot; wk4&ndash;12 0.70 &middot; &rarr;0.625 by wk26 &middot; &rarr;0.50 by wk52</p>
+</div>
+<script>
+  function marg(w){
+    if(w<=1)return 1.00;if(w===2)return 0.80;if(w===3)return 0.75;
+    if(w<=12)return 0.70;
+    if(w<=26)return 0.70+(0.625-0.70)*(w-12)/14;
+    if(w<=52)return 0.625+(0.5-0.625)*(w-26)/26;
+    return 0.5;
+  }
+  function cum(n){var s=0;for(var i=1;i<=n;i++)s+=marg(i);return s;}
+  var tiers=[
+    {name:"Wk 1 — full",c:"#111318",from:1,to:1,lab:"1.00×"},
+    {name:"Wk 2",c:"#0f6e56",from:2,to:2,lab:"0.80×"},
+    {name:"Wk 3",c:"#158b7d",from:3,to:3,lab:"0.75×"},
+    {name:"Wk 4–12",c:"#1baf7a",from:4,to:12,lab:"0.70×"},
+    {name:"Wk 13–26",c:"#5dcaa5",from:13,to:26,lab:"0.70→0.625×"},
+    {name:"Wk 27–52",c:"#9fe1cb",from:27,to:52,lab:"0.625→0.50×"}
+  ];
+  function tcol(w){for(var i=0;i<tiers.length;i++)if(w>=tiers[i].from&&w<=tiers[i].to)return tiers[i].c;return "#9fe1cb";}
+  var VW=760,VH=240,pl=46,pr=14,pt=12,pb=26,plotW=VW-pl-pr,plotH=VH-pt-pb;
+  function xw(w){return pl+(w-1)/51*plotW;}
+  function esc(s){return s;}
+  function frame(inner){return "<svg viewBox='0 0 "+VW+" "+VH+"' width='100%' preserveAspectRatio='xMidYMid meet' style='display:block' role='img'>"+inner+"</svg>";}
+  function xlabels(){var t="",arr=[1,10,20,30,40,52];for(var i=0;i<arr.length;i++){var x=xw(arr[i]);t+="<text x='"+x.toFixed(1)+"' y='"+(VH-8)+"' font-size='10' fill='#6b7280' text-anchor='middle'>wk "+arr[i]+"</text>";}return t;}
+  function ygridMult(){var t="";for(var v=0.4;v<=1.0001;v+=0.1){var y=pt+(1-(v-0.4)/0.6)*plotH;t+="<line x1='"+pl+"' y1='"+y.toFixed(1)+"' x2='"+(VW-pr)+"' y2='"+y.toFixed(1)+"' stroke='#e4e6ea' stroke-width='1'/>";t+="<text x='"+(pl-6)+"' y='"+(y+3).toFixed(1)+"' font-size='10' fill='#6b7280' text-anchor='end'>"+v.toFixed(1)+"×</text>";}return t;}
+  function ym(v){return pt+(1-(v-0.4)/0.6)*plotH;}
+
+  function buildStruct(){
+    var bw=plotW/52*0.86,base=ym(0.4),inner=ygridMult();
+    for(var w=1;w<=52;w++){var x=xw(w)-bw/2,y=ym(marg(w)),h=base-y;
+      inner+="<rect x='"+x.toFixed(1)+"' y='"+y.toFixed(1)+"' width='"+bw.toFixed(1)+"' height='"+h.toFixed(1)+"' rx='1.5' fill='"+tcol(w)+"'/>";}
+    inner+=xlabels();
+    document.getElementById("s1").innerHTML=frame(inner);
+    document.getElementById("legStruct").innerHTML=tiers.map(function(t){return "<span><i class='sw' style='background:"+t.c+"'></i>"+t.name+" · "+t.lab+"</span>";}).join("");
+  }
+  function poly(fn,dash,color){var pts="";for(var w=1;w<=52;w++){pts+=xw(w).toFixed(1)+","+ym(fn(w)).toFixed(1)+" ";}
+    return "<polyline points='"+pts.trim()+"' fill='none' stroke='"+color+"' stroke-width='2' stroke-linejoin='round'"+(dash?" stroke-dasharray='5,4'":"")+"/>";}
+  function buildLines(){
+    var inner=ygridMult();
+    inner+=poly(function(w){return marg(w);},false,"#158b7d");
+    inner+=poly(function(w){return cum(w)/w;},true,"#2a78d6");
+    inner+=xlabels();
+    document.getElementById("s2").innerHTML=frame(inner);
+  }
+  function buildCum(){
+    var maxv=34,inner="";
+    for(var v=0;v<=30;v+=10){var y=pt+(1-v/maxv)*plotH;inner+="<line x1='"+pl+"' y1='"+y.toFixed(1)+"' x2='"+(VW-pr)+"' y2='"+y.toFixed(1)+"' stroke='#e4e6ea' stroke-width='1'/>";inner+="<text x='"+(pl-6)+"' y='"+(y+3).toFixed(1)+"' font-size='10' fill='#6b7280' text-anchor='end'>"+v+"×</text>";}
+    function yc(v){return pt+(1-v/maxv)*plotH;}
+    var pts="",area="";for(var w=1;w<=52;w++){var x=xw(w).toFixed(1),y=yc(cum(w)).toFixed(1);pts+=x+","+y+" ";}
+    area="<polygon points='"+xw(1).toFixed(1)+","+yc(0).toFixed(1)+" "+pts.trim()+" "+xw(52).toFixed(1)+","+yc(0).toFixed(1)+"' fill='rgba(74,58,167,0.10)'/>";
+    inner+=area+"<polyline points='"+pts.trim()+"' fill='none' stroke='#4a3aa7' stroke-width='2' stroke-linejoin='round'/>"+xlabels();
+    document.getElementById("s3").innerHTML=frame(inner);
+    var kp=[[1,cum(1)],[4,cum(4)],[12,cum(12)],[52,cum(52)]];
+    document.getElementById("kpis").innerHTML=kp.map(function(p){var m=p[1],mult=m>=10?m.toFixed(1):m.toFixed(2);
+      return "<div class='kpi'><div class='l'>"+p[0]+" week"+(p[0]>1?"s":"")+"</div><div class='v'>"+mult+"×</div><div class='s'>$"+Math.round(m*500).toLocaleString()+" @ $500/wk</div></div>";}).join("");
+  }
+  function buildAll(){buildStruct();buildLines();buildCum();}
+  function unlock(){var pw=document.getElementById("gatepw").value;
+    if(pw==="chachacha"){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="";buildAll();}
+    else{document.getElementById("gateerr").style.visibility="visible";document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}}
+  document.getElementById("gatebtn").addEventListener("click",unlock);
+  document.getElementById("gatepw").addEventListener("keydown",function(ev){if(ev.key==="Enter")unlock();});
+  document.getElementById("gatepw").focus();
+</script>
+</body>
+</html>
