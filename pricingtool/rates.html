@@ -49,7 +49,7 @@
     <input id="gatepw" type="password" placeholder="Password" autocomplete="off" />
     <button id="gatebtn" type="button">Unlock</button>
     <div class="gateerr" id="gateerr">Incorrect password</div>
-    <div class="gatever">v1.0.3</div>
+    <div class="gatever">v1.0.4</div>
   </div>
 </div>
 <div class="wrap" id="app" style="display:none">
@@ -140,9 +140,12 @@
       return "<div class='kpi'><div class='l'>"+p[0]+" week"+(p[0]>1?"s":"")+"</div><div class='v'>"+mult+"×</div><div class='s'>$"+Math.round(m*500).toLocaleString()+" @ $500/wk</div></div>";}).join("");
   }
   function buildAll(){buildStruct();buildLines();buildCum();}
+  var PW_HASH="abedff96dc305d7860c6f7c1beecda0edfa0ad3466eb66d8d37a2eb4e1d0f8a0";
+  function sha256hex(s){return crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)).then(function(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return("0"+x.toString(16)).slice(-2);}).join("");});}
   function unlock(){var pw=document.getElementById("gatepw").value;
-    if(pw==="chachacha"){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="";buildAll();}
-    else{document.getElementById("gateerr").style.visibility="visible";document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}}
+    sha256hex(pw).then(function(h){
+    if(h===PW_HASH){document.getElementById("gate").style.display="none";document.getElementById("app").style.display="";buildAll();}
+    else{document.getElementById("gateerr").style.visibility="visible";document.getElementById("gatepw").value="";document.getElementById("gatepw").focus();}});}
   document.getElementById("gatebtn").addEventListener("click",unlock);
   document.getElementById("gatepw").addEventListener("keydown",function(ev){if(ev.key==="Enter")unlock();});
   document.getElementById("gatepw").focus();
